@@ -49,7 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <main style={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ padding: '32px', minHeight: '100%' }}>
+          <div className="app-main-pad" style={{ padding: '32px', minHeight: '100%' }}>
             {children}
           </div>
         </main>

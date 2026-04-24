@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="rg-4 grid grid-cols-4 gap-4">
         {[
           { label: 'Profit Factor', value: hasTrades ? stats.profit_factor.toFixed(2) : '—', positive: stats.profit_factor > 1 },
           { label: 'Max Drawdown',  value: hasTrades ? `${stats.max_drawdown.toFixed(2)}%` : '—', negative: hasTrades },
@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
       ) : (
         <>
           {/* Charts */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="rg-2 grid grid-cols-2 gap-4">
             <div className="card p-5">
               <h3 className="text-[13px] font-semibold text-white mb-4">Performance by Symbol</h3>
               <div style={{ height: 240 }}>
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Insights */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="rg-2 grid grid-cols-2 gap-4">
             <div className="card p-5" style={{ border: '1px solid rgba(139,92,246,0.2)' }}>
               <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--violet)' }}>Best Performing Symbol</div>
               <div className="text-[20px] font-bold text-white">{bestSymbol?.symbol ?? '—'}</div>

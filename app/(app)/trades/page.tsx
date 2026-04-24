@@ -58,7 +58,7 @@ export default function TradesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h1 className="text-[22px] font-bold text-white">Trades</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--muted)' }}>{trades.length} total trades</p>
@@ -104,8 +104,8 @@ export default function TradesPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* Desktop table */}
+      <div className="card overflow-hidden desktop-only">
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Loading trades...</div>
         ) : (
@@ -165,6 +165,56 @@ export default function TradesPage() {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="mobile-only" style={{ display: 'none', flexDirection: 'column', gap: 10 }}>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Loading trades...</div>
+        ) : filtered.length === 0 ? (
+          <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
+            {trades.length === 0 ? 'No trades yet — tap Add Trade to get started' : 'No trades match this filter'}
+          </div>
+        ) : (
+          filtered.map(t => (
+            <div
+              key={t.id}
+              className="card"
+              onClick={() => setSelected(t)}
+              style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10 }}
+            >
+              {/* Row 1: symbol + direction + P&L */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{t.symbol}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {t.direction === 'long'
+                      ? <ArrowUpRight size={13} style={{ color: 'var(--gain)' }} />
+                      : <ArrowDownRight size={13} style={{ color: 'var(--loss)' }} />}
+                    <span style={{ fontSize: 12, color: t.direction === 'long' ? 'var(--gain)' : 'var(--loss)', textTransform: 'capitalize' }}>
+                      {t.direction}
+                    </span>
+                  </div>
+                  <span className={t.status === 'open' ? 'badge-violet' : 'badge-neutral'}>{t.status}</span>
+                </div>
+                {t.pnl !== null
+                  ? <span className={t.pnl >= 0 ? 'badge-gain' : 'badge-loss'} style={{ fontSize: 13, fontWeight: 700 }}>{formatCurrency(t.pnl)}</span>
+                  : <span style={{ color: 'var(--muted)', fontSize: 13 }}>Open</span>}
+              </div>
+
+              {/* Row 2: date + duration + pnl% */}
+              <div style={{ display: 'flex', gap: 16 }}>
+                <span style={{ fontSize: 11, color: 'var(--muted)' }}>{formatDateTime(t.entry_time)}</span>
+                {t.exit_time && <span style={{ fontSize: 11, color: 'var(--muted)' }}>{formatDuration(t.entry_time, t.exit_time)}</span>}
+                {t.pnl_percent !== null && (
+                  <span style={{ fontSize: 11, marginLeft: 'auto', color: t.pnl_percent >= 0 ? 'var(--gain)' : 'var(--loss)', fontWeight: 600 }}>
+                    {formatPct(t.pnl_percent)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
         )}
       </div>
 

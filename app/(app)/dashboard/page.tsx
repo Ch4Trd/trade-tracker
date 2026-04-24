@@ -60,7 +60,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+      <div className="rg-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, borderRadius: '16px 16px 0 0', background: 'linear-gradient(90deg, #7c3aed, #a855f7)' }} />
           <MetricCard
@@ -101,7 +101,7 @@ export default function DashboardPage() {
           Loading...
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
+        <div className="rg-charts" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
           <div style={{ position: 'relative' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, borderRadius: '16px 16px 0 0', zIndex: 1, background: 'linear-gradient(90deg, #7c3aed, rgba(168,85,247,0.3), transparent)' }} />
             <EquityCurve data={curve} />
@@ -112,7 +112,7 @@ export default function DashboardPage() {
 
       {/* Mini stats */}
       {hasTrades && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+        <div className="rg-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
           {[
             { label: 'Profit Factor', value: stats.profit_factor.toFixed(2), color: 'var(--gain)' },
             { label: 'Max Drawdown',  value: `${stats.max_drawdown.toFixed(2)}%`, color: 'var(--loss)' },

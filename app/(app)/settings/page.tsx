@@ -87,7 +87,7 @@ export default function SettingsPage() {
 
       {/* Profile */}
       <Section title="Profile" icon={User}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="rg-2 grid grid-cols-2 gap-4">
           <Field label="Display Name">
             <input className="input-field" value={profile.name}
               onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} />
@@ -211,7 +211,7 @@ export default function SettingsPage() {
 
       {/* Risk Rules */}
       <Section title="Risk Management Rules" icon={Shield}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="rg-2 grid grid-cols-2 gap-4">
           <Field label="Max Risk Per Trade (%)" note="Percentage of account risked per position">
             <input className="input-field" type="number" step="0.1" min="0.1" max="10"
               value={rules.max_risk_per_trade} onChange={ruleSet('max_risk_per_trade')} />
@@ -280,7 +280,7 @@ export default function SettingsPage() {
 
       {/* Export */}
       <Section title="Data Export" icon={Download}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="rg-2 grid grid-cols-2 gap-3">
           <button
             className="btn-ghost flex items-center justify-center gap-2 py-3"
             onClick={() => exportTradesToCSV(trades)}
@@ -303,7 +303,7 @@ export default function SettingsPage() {
       </Section>
 
       {/* Save + Sign out */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <button
           className="btn-primary flex items-center gap-2 px-6 py-3"
           onClick={handleSave}

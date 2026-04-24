@@ -233,6 +233,74 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
+/* ===== MOBILE BOTTOM NAV ===== */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 62px;
+  background: rgba(12,14,27,0.97);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  z-index: 100;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+  min-width: 52px;
+}
+.mobile-nav-item.active { color: var(--violet); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 639px) {
+  /* Navigation */
+  .desktop-sidebar { display: none; }
+  .mobile-nav      { display: flex; }
+
+  /* Main padding */
+  .app-main-pad { padding: 16px !important; padding-bottom: 80px !important; }
+
+  /* Responsive grid helpers (override inline styles) */
+  .rg-4      { grid-template-columns: repeat(2, 1fr) !important; }
+  .rg-2      { grid-template-columns: 1fr !important; }
+  .rg-charts { grid-template-columns: 1fr !important; }
+
+  /* Modal → bottom sheet */
+  .modal-overlay { align-items: flex-end; }
+  .modal-panel {
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Show/hide */
+  .mobile-only  { display: block !important; }
+  .desktop-only { display: none !important; }
+
+  /* Trades mobile card overrides */
+  .trade-card-mobile { display: flex !important; }
+}
+@media (min-width: 640px) {
+  .mobile-only  { display: none !important; }
+  .trade-card-mobile { display: none !important; }
+}
+
 /* Pulse animation for live dot */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
