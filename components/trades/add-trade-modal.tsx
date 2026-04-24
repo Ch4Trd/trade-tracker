@@ -10,9 +10,11 @@ interface AddTradeModalProps {
   onAdd:   (payload: Omit<TradeWithDetails, 'id' | 'user_id' | 'created_at'>) => Promise<{ error: string | null }>;
 }
 
+type InputMode = 'position' | 'pnl';
+
 const SYMBOLS = ['NQ1', 'ES1', 'EUR/USD', 'GBP/USD', 'XTI/USD'];
 
-function getPnl(symbol: string, direction: string, entry: number, exit: number, size: number): number {
+function calcPnl(symbol: string, direction: string, entry: number, exit: number, size: number): number {
   const diff = direction === 'long' ? exit - entry : entry - exit;
   if (symbol === 'NQ1') return diff * 20 * size;
   if (symbol === 'ES1') return diff * 50 * size;
@@ -23,54 +25,77 @@ export function AddTradeModal({ onClose, onAdd }: AddTradeModalProps) {
   const { propAccounts } = useAuth();
   const activeAccounts = propAccounts.filter(a => a.is_active);
 
+  const [inputMode, setInputMode] = useState<InputMode>('position');
   const [form, setForm] = useState({
-    symbol:         'NQ1',
-    direction:      'long',
-    entry_price:    '',
-    exit_price:     '',
-    entry_time:     new Date().toISOString().slice(0, 16),
-    exit_time:      '',
-    position_size:  '',
-    prop_account_id: activeAccounts[0]?.id ?? '',
-    entry_reason:   '',
-    exit_reason:    '',
+    symbol:              'NQ1',
+    direction:           'long',
+    entry_price:         '',
+    exit_price:          '',
+    position_size:       '',
+    realized_pnl:        '',
+    entry_time:          new Date().toISOString().slice(0, 16),
+    exit_time:           '',
+    prop_account_id:     activeAccounts[0]?.id ?? '',
+    entry_reason:        '',
+    exit_reason:         '',
     psychological_notes: '',
-    confidence_level:   '3',
-    structure_quality:  '3',
-    confluence_count:   '2',
+    confidence_level:    '3',
+    structure_quality:   '3',
+    confluence_count:    '2',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
+  const isFutures    = form.symbol === 'NQ1' || form.symbol === 'ES1';
+  const accountSize  = activeAccounts.find(a => a.id === form.prop_account_id)?.account_size ?? 0;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const entry = parseFloat(form.entry_price);
-    const exit  = form.exit_price ? parseFloat(form.exit_price) : null;
-    const size  = parseFloat(form.position_size);
 
-    let pnl: number | null = null;
+    let pnl: number | null         = null;
     let pnl_percent: number | null = null;
-    const accountSize = activeAccounts.find(a => a.id === form.prop_account_id)?.account_size ?? 0;
+    let entry_price                = 0;
+    let exit_price: number | null  = null;
+    let position_size              = 0;
+    let status: 'open' | 'closed' | 'pending' = 'open';
 
-    if (exit !== null) {
-      pnl = parseFloat(getPnl(form.symbol, form.direction, entry, exit, size).toFixed(2));
-      pnl_percent = accountSize > 0 ? parseFloat(((pnl / accountSize) * 100).toFixed(2)) : null;
+    if (inputMode === 'position') {
+      const entry = parseFloat(form.entry_price);
+      const exit  = form.exit_price ? parseFloat(form.exit_price) : null;
+      const size  = parseFloat(form.position_size);
+      if (isNaN(entry) || isNaN(size)) { setError('Entry price and size are required.'); return; }
+
+      entry_price   = entry;
+      exit_price    = exit;
+      position_size = size;
+
+      if (exit !== null) {
+        pnl         = parseFloat(calcPnl(form.symbol, form.direction, entry, exit, size).toFixed(2));
+        pnl_percent = accountSize > 0 ? parseFloat(((pnl / accountSize) * 100).toFixed(2)) : null;
+        status      = 'closed';
+      }
+    } else {
+      const direct = parseFloat(form.realized_pnl);
+      if (isNaN(direct)) { setError('Realized P&L is required.'); return; }
+      pnl         = direct;
+      pnl_percent = accountSize > 0 ? parseFloat(((direct / accountSize) * 100).toFixed(2)) : null;
+      status      = 'closed';
     }
 
     const payload: Omit<TradeWithDetails, 'id' | 'user_id' | 'created_at'> & { prop_account_id?: string } = {
       symbol:         form.symbol,
       direction:      form.direction as 'long' | 'short',
-      entry_price:    entry,
-      exit_price:     exit,
+      entry_price,
+      exit_price,
       entry_time:     new Date(form.entry_time).toISOString(),
       exit_time:      form.exit_time ? new Date(form.exit_time).toISOString() : null,
-      position_size:  size,
+      position_size,
       pnl,
       pnl_percent,
-      status:         exit !== null ? 'closed' : 'open',
+      status,
       prop_account_id: form.prop_account_id || undefined,
       details: {
         trade_id:            '',
@@ -91,8 +116,6 @@ export function AddTradeModal({ onClose, onAdd }: AddTradeModalProps) {
     onClose();
   }
 
-  const isFutures = form.symbol === 'NQ1' || form.symbol === 'ES1';
-
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-panel w-full max-w-lg mx-4">
@@ -102,6 +125,31 @@ export function AddTradeModal({ onClose, onAdd }: AddTradeModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 overflow-y-auto" style={{ maxHeight: '75vh' }}>
+
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 3, gap: 2 }}>
+            {(['position', 'pnl'] as InputMode[]).map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setInputMode(m)}
+                style={{
+                  flex: 1,
+                  padding: '7px 0',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  background: inputMode === m ? 'rgba(139,92,246,0.2)' : 'transparent',
+                  color: inputMode === m ? 'var(--violet)' : 'var(--muted)',
+                }}
+              >
+                {m === 'position' ? 'By Contract / Lot' : 'By Realized P&L'}
+              </button>
+            ))}
+          </div>
 
           {/* Prop account selector */}
           {activeAccounts.length > 1 && (
@@ -134,32 +182,56 @@ export function AddTradeModal({ onClose, onAdd }: AddTradeModalProps) {
             </div>
           </div>
 
-          {/* Prices + Size */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="label">Entry Price</label>
-              <input required className="input-field" type="number" step="any"
-                placeholder={form.symbol === 'NQ1' ? '21456' : form.symbol === 'ES1' ? '5234' : '1.0825'}
-                value={form.entry_price} onChange={e => set('entry_price', e.target.value)} />
-            </div>
-            <div>
-              <label className="label">Exit Price</label>
-              <input className="input-field" type="number" step="any"
-                placeholder={form.symbol === 'NQ1' ? '21471' : form.symbol === 'ES1' ? '5240' : '1.0981'}
-                value={form.exit_price} onChange={e => set('exit_price', e.target.value)} />
-            </div>
-            <div>
-              <label className="label">{isFutures ? 'Contracts' : 'Lot Size'}</label>
-              <input required className="input-field" type="number" step={isFutures ? '1' : '0.01'}
-                placeholder={isFutures ? '1' : '0.10'}
-                value={form.position_size} onChange={e => set('position_size', e.target.value)} />
-            </div>
-          </div>
+          {/* Position mode fields */}
+          {inputMode === 'position' && (
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="label">Entry Price</label>
+                  <input required className="input-field" type="number" step="any"
+                    placeholder={form.symbol === 'NQ1' ? '21456' : form.symbol === 'ES1' ? '5234' : '1.0825'}
+                    value={form.entry_price} onChange={e => set('entry_price', e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">Exit Price</label>
+                  <input className="input-field" type="number" step="any"
+                    placeholder={form.symbol === 'NQ1' ? '21471' : form.symbol === 'ES1' ? '5240' : '1.0981'}
+                    value={form.exit_price} onChange={e => set('exit_price', e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">{isFutures ? 'Contracts' : 'Lot Size'}</label>
+                  <input required className="input-field" type="number" step={isFutures ? '1' : '0.01'}
+                    placeholder={isFutures ? '1' : '0.10'}
+                    value={form.position_size} onChange={e => set('position_size', e.target.value)} />
+                </div>
+              </div>
+              {isFutures && (
+                <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
+                  {form.symbol === 'NQ1' ? 'NQ1: $20/point per contract' : 'ES1: $50/point per contract'}
+                </p>
+              )}
+            </>
+          )}
 
-          {isFutures && (
-            <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
-              {form.symbol === 'NQ1' ? 'NQ1: $20/point per contract' : 'ES1: $50/point per contract'}
-            </p>
+          {/* P&L mode fields */}
+          {inputMode === 'pnl' && (
+            <div>
+              <label className="label">Realized P&L ($)</label>
+              <input
+                required
+                className="input-field"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 420.00 or -150.00"
+                value={form.realized_pnl}
+                onChange={e => set('realized_pnl', e.target.value)}
+              />
+              {accountSize > 0 && form.realized_pnl && !isNaN(parseFloat(form.realized_pnl)) && (
+                <p className="text-[11px] mt-1.5" style={{ color: 'var(--muted)' }}>
+                  = {((parseFloat(form.realized_pnl) / accountSize) * 100).toFixed(2)}% of account
+                </p>
+              )}
+            </div>
           )}
 
           {/* Times */}

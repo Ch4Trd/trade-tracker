@@ -1,12 +1,14 @@
 'use client';
 
-import { X, ArrowUpRight, ArrowDownRight, Star } from 'lucide-react';
+import { useState } from 'react';
+import { X, ArrowUpRight, ArrowDownRight, Star, Trash2, Loader2 } from 'lucide-react';
 import type { TradeWithDetails } from '@/types';
 import { formatCurrency, formatPct, formatDateTime, formatDuration, formatLot } from '@/lib/formatters';
 
 interface TradeDetailModalProps {
   trade: TradeWithDetails;
   onClose: () => void;
+  onDelete?: () => Promise<void>;
 }
 
 function Stars({ value }: { value: number }) {
@@ -25,9 +27,11 @@ function Stars({ value }: { value: number }) {
   );
 }
 
-export function TradeDetailModal({ trade, onClose }: TradeDetailModalProps) {
+export function TradeDetailModal({ trade, onClose, onDelete }: TradeDetailModalProps) {
   const win = trade.pnl !== null && trade.pnl > 0;
   const d = trade.details;
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting]     = useState(false);
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -49,8 +53,38 @@ export function TradeDetailModal({ trade, onClose }: TradeDetailModalProps) {
               {trade.pnl !== null ? formatCurrency(trade.pnl) : '—'}
             </span>
           </div>
-          <button className="btn-icon" onClick={onClose}><X size={16} /></button>
+          <div className="flex items-center gap-2">
+            {onDelete && (
+              <button className="btn-icon" onClick={() => setConfirming(true)} title="Delete trade">
+                <Trash2 size={15} style={{ color: '#ef4444' }} />
+              </button>
+            )}
+            <button className="btn-icon" onClick={onClose}><X size={16} /></button>
+          </div>
         </div>
+
+        {confirming && (
+          <div style={{ padding: '12px 24px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontSize: 13, color: '#f87171' }}>Delete this trade permanently?</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setConfirming(false)}>
+                Cancel
+              </button>
+              <button
+                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: deleting ? 0.7 : 1 }}
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  await onDelete?.();
+                  onClose();
+                }}
+              >
+                {deleting ? <Loader2 size={12} className="animate-spin" /> : null}
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="px-6 py-5 space-y-5 overflow-y-auto" style={{ maxHeight: '70vh' }}>
           {/* Stats grid */}

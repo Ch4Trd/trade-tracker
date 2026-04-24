@@ -12,7 +12,7 @@ type SortKey = 'date' | 'symbol' | 'pnl' | 'status';
 type Filter  = 'all' | 'profit' | 'loss' | 'open';
 
 export default function TradesPage() {
-  const { trades, loading, addTrade } = useTrades();
+  const { trades, loading, addTrade, deleteTrade } = useTrades();
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState<Filter>('all');
   const [sort, setSort]       = useState<SortKey>('date');
@@ -162,7 +162,13 @@ export default function TradesPage() {
         )}
       </div>
 
-      {selected && <TradeDetailModal trade={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <TradeDetailModal
+          trade={selected}
+          onClose={() => setSelected(null)}
+          onDelete={async () => { await deleteTrade(selected.id); setSelected(null); }}
+        />
+      )}}
       {adding   && <AddTradeModal onClose={() => setAdding(false)} onAdd={addTrade} />}
     </div>
   );

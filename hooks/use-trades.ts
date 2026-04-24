@@ -74,5 +74,16 @@ export function useTrades() {
     return { error: null };
   }
 
-  return { trades, loading, addTrade, reload: load };
+  async function deleteTrade(id: string): Promise<{ error: string | null }> {
+    if (!user) return { error: 'Not authenticated' };
+    const { error } = await supabase
+      .from('trades')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (!error) setTrades(prev => prev.filter(t => t.id !== id));
+    return { error: error?.message ?? null };
+  }
+
+  return { trades, loading, addTrade, deleteTrade, reload: load };
 }
