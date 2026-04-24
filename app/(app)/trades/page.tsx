@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, ArrowUpRight, ArrowDownRight, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, ArrowUpRight, ArrowDownRight, ArrowUpDown, Download } from 'lucide-react';
 import { useTrades } from '@/hooks/use-trades';
 import { TradeDetailModal } from '@/components/trades/trade-detail-modal';
 import { AddTradeModal } from '@/components/trades/add-trade-modal';
 import { formatCurrency, formatPct, formatDateTime, formatDuration, formatLot } from '@/lib/formatters';
+import { exportTradesToCSV } from '@/lib/trade-utils';
 import type { TradeWithDetails } from '@/types';
 
 type SortKey = 'date' | 'symbol' | 'pnl' | 'status';
@@ -62,9 +63,14 @@ export default function TradesPage() {
           <h1 className="text-[22px] font-bold text-white">Trades</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--muted)' }}>{trades.length} total trades</p>
         </div>
-        <button className="btn-primary flex items-center gap-2" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add Trade
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="btn-ghost flex items-center gap-2" onClick={() => exportTradesToCSV(trades)} disabled={trades.length === 0}>
+            <Download size={14} /> Export CSV
+          </button>
+          <button className="btn-primary flex items-center gap-2" onClick={() => setAdding(true)}>
+            <Plus size={15} /> Add Trade
+          </button>
+        </div>
       </div>
 
       {/* Summary */}

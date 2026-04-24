@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Download, Shield, Bell, User, Building2, Plus, XCircle, RefreshCw, LogOut } from 'lucide-react';
 import { DEFAULT_RISK_RULES } from '@/lib/mock-data';
 import type { RiskRules } from '@/types';
 import { useAuth } from '@/contexts/auth';
+import { useTrades } from '@/hooks/use-trades';
+import { exportTradesToCSV } from '@/lib/trade-utils';
 
 const ACCOUNT_SIZES = [5000, 10000, 25000, 50000, 100000, 150000, 200000, 250000];
 function fmtSize(n: number) { return n >= 1000 ? `$${n / 1000}K` : `$${n}`; }
@@ -36,10 +38,19 @@ function Field({ label, note, children }: { label: string; note?: string; childr
 
 export default function SettingsPage() {
   const { profile: authProfile, propAccounts, addPropAccount, revokePropAccount, reactivatePropAccount, updateProfile, user } = useAuth();
+  const { trades } = useTrades();
   const [rules, setRules] = useState<RiskRules>(DEFAULT_RISK_RULES);
   const [saved, setSaved] = useState(false);
-  const [profile, setProfile] = useState({ name: authProfile?.name ?? '', email: user?.email ?? '', timezone: authProfile?.timezone ?? 'America/New_York' });
+  const [profile, setProfile] = useState({ name: '', email: '', timezone: 'America/New_York' });
   const [notifs, setNotifs] = useState({ daily_summary: true, loss_alert: true, weekly_report: false });
+
+  useEffect(() => {
+    if (authProfile) setProfile(p => ({ ...p, name: authProfile.name ?? '', timezone: authProfile.timezone }));
+  }, [authProfile]);
+
+  useEffect(() => {
+    if (user) setProfile(p => ({ ...p, email: user.email ?? '' }));
+  }, [user]);
 
   // Prop account add form
   const [showAddAccount, setShowAddAccount] = useState(false);
@@ -270,17 +281,24 @@ export default function SettingsPage() {
       {/* Export */}
       <Section title="Data Export" icon={Download}>
         <div className="grid grid-cols-2 gap-3">
-          <button className="btn-ghost flex items-center justify-center gap-2 py-3">
+          <button
+            className="btn-ghost flex items-center justify-center gap-2 py-3"
+            onClick={() => exportTradesToCSV(trades)}
+            disabled={trades.length === 0}
+          >
             <Download size={14} />
             Export Trades CSV
           </button>
-          <button className="btn-ghost flex items-center justify-center gap-2 py-3">
+          <button
+            className="btn-ghost flex items-center justify-center gap-2 py-3"
+            onClick={() => window.print()}
+          >
             <Download size={14} />
-            Monthly PDF Report
+            Print / PDF Report
           </button>
         </div>
         <p className="text-[12px]" style={{ color: 'var(--muted)' }}>
-          CSV export includes all trades with entry/exit, P&L, and journal notes. PDF report includes equity curve and statistics.
+          CSV export includes all {trades.length} trades with entry/exit, P&L, and notes.{trades.length === 0 ? ' Add trades first.' : ''}
         </p>
       </Section>
 

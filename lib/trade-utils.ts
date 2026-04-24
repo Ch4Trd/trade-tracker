@@ -1,5 +1,49 @@
 import type { TradeWithDetails, EquityPoint, DayPnl, SymbolStats, DashboardStats } from '@/types';
 
+export function exportTradesToCSV(trades: TradeWithDetails[]) {
+  const headers = ['Date', 'Symbol', 'Direction', 'Entry Price', 'Exit Price', 'Size', 'P&L ($)', 'P&L (%)', 'Status', 'Duration', 'Entry Reason', 'Exit Reason', 'Psychology', 'Confidence', 'Structure', 'Confluence'];
+  const rows = trades.map(t => {
+    let duration = '';
+    if (t.entry_time && t.exit_time) {
+      const ms = new Date(t.exit_time).getTime() - new Date(t.entry_time).getTime();
+      const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+      duration = h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+    return [
+      new Date(t.entry_time).toLocaleDateString('en-CA'),
+      t.symbol,
+      t.direction,
+      t.entry_price,
+      t.exit_price ?? '',
+      t.position_size,
+      t.pnl ?? '',
+      t.pnl_percent ?? '',
+      t.status,
+      duration,
+      t.details?.entry_reason ?? '',
+      t.details?.exit_reason ?? '',
+      t.details?.psychological_notes ?? '',
+      t.details?.confidence_level ?? '',
+      t.details?.structure_quality ?? '',
+      t.details?.confluence_count ?? '',
+    ];
+  });
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `trades-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export function buildDashboardStats(trades: TradeWithDetails[], startBalance: number): DashboardStats {
   const closed = trades.filter(t => t.status === 'closed' && t.pnl !== null);
   const wins   = closed.filter(t => (t.pnl ?? 0) > 0);
